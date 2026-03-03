@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+title: netkit
+message: "If you use NetKit, please cite this project and credit George Gil (TinMan)."
+authors:
+  - family-names: Gil
+    given-names: George
+    alias: TinMan
+repository-code: https://github.com/tinmanworks-framekit/netkit
+license: Apache-2.0
