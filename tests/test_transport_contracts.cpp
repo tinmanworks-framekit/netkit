@@ -27,6 +27,12 @@ int main() {
         mac_backend == netkit::shared_memory::SharedMemoryBackendKind::kMacPosix ||
         mac_backend == netkit::shared_memory::SharedMemoryBackendKind::kInMemoryFallback);
 #endif
+#if defined(_WIN32)
+    const auto windows_backend = bundle.data->BackendKind();
+    assert(
+        windows_backend == netkit::shared_memory::SharedMemoryBackendKind::kWindowsFileMapping ||
+        windows_backend == netkit::shared_memory::SharedMemoryBackendKind::kInMemoryFallback);
+#endif
 
     std::vector<std::uint8_t> payload{1, 2, 3};
     assert(bundle.data->Write(payload));

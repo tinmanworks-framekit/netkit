@@ -41,6 +41,11 @@ private:
     std::uint8_t* mapped_data_ = nullptr;
     std::size_t mapped_size_ = 0;
 #endif
+#if defined(_WIN32)
+    void* mapping_handle_ = nullptr;
+    std::uint8_t* mapped_data_ = nullptr;
+    std::size_t mapped_size_ = 0;
+#endif
 };
 
 } // namespace netkit::shared_memory
