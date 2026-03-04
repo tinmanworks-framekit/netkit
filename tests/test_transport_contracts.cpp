@@ -14,6 +14,11 @@ int main() {
     auto bundle = factory.Create(cfg);
     assert(bundle.control);
     assert(bundle.data);
+    assert(bundle.control->IsOpen());
+
+#if defined(__linux__) || defined(__APPLE__)
+    assert(bundle.control->Kind() == netkit::control::BackendKind::kUnixDomainSocket);
+#endif
 
 #if defined(__linux__)
     const auto linux_backend = bundle.data->BackendKind();
@@ -39,6 +44,17 @@ int main() {
 
     auto read_back = bundle.data->Read();
     assert(read_back.size() == payload.size());
+
+    netkit::control::ControlEnvelope control_message;
+    control_message.sequence_id = 7;
+    control_message.message_type = "start";
+    control_message.payload = "payload";
+    assert(bundle.control->Send(control_message));
+
+    const auto received = bundle.control->Receive();
+    assert(received.has_value());
+    assert(received->sequence_id == 7);
+    assert(received->message_type == "start");
 
     return 0;
 }
