@@ -38,3 +38,20 @@ jobs:
 
       - name: Test
         run: ctest --test-dir build --output-on-failure -C Release
+
+  macos-transport:
+    name: macOS Transport
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -S . -B build -DNETKIT_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
