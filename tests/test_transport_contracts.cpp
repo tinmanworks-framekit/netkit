@@ -19,6 +19,9 @@ int main() {
 #if defined(__linux__) || defined(__APPLE__)
     assert(bundle.control->Kind() == netkit::control::BackendKind::kUnixDomainSocket);
 #endif
+#if defined(_WIN32)
+    assert(bundle.control->Kind() == netkit::control::BackendKind::kNamedPipe);
+#endif
 
 #if defined(__linux__)
     const auto linux_backend = bundle.data->BackendKind();
