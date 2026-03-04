@@ -11,3 +11,10 @@ add_executable(netkit_control_channel_test
 
 target_link_libraries(netkit_control_channel_test PRIVATE NetKit::Transport)
 add_test(NAME netkit_control_channel_test COMMAND netkit_control_channel_test)
+
+add_executable(netkit_shm_pipe_integration_test
+    test_shm_pipe_integration.cpp
+)
+
+target_link_libraries(netkit_shm_pipe_integration_test PRIVATE NetKit::Transport)
+add_test(NAME netkit_shm_pipe_integration_test COMMAND netkit_shm_pipe_integration_test)
