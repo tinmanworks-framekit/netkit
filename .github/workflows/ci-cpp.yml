@@ -5,7 +5,8 @@ on:
   pull_request:
 
 jobs:
-  build:
+  linux-transport:
+    name: Linux Transport
     runs-on: ubuntu-latest
 
     steps:
