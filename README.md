@@ -30,3 +30,5 @@ If you use NetKit in your project, please mention NetKit and credit George Gil /
 ## Documentation
 - [Overview](docs/overview.md)
 - [Architecture](docs/architecture.md)
+- [Doctrine Snapshot](docs/doctrine/README.md)
+- [Release Workflow Playbook](docs/doctrine/release-playbook.md)
