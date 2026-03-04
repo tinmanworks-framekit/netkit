@@ -2,7 +2,21 @@
 
 #include <cassert>
 #include <cstdint>
+#include <memory>
 #include <vector>
+
+namespace {
+
+class FakeMetricsHook : public netkit::transport::ITransportLifecycleMetricsHook {
+public:
+    void OnLifecycleEvent(const netkit::transport::TransportLifecycleEvent& event) override {
+        events.push_back(event);
+    }
+
+    std::vector<netkit::transport::TransportLifecycleEvent> events;
+};
+
+} // namespace
 
 int main() {
     netkit::transport::ShmPipeFactory factory;
@@ -10,6 +24,8 @@ int main() {
     retry_policy.max_attempts = 2;
     factory.SetRetryPolicy(retry_policy);
     assert(factory.CurrentRetryPolicy().max_attempts == 2);
+    auto metrics = std::make_shared<FakeMetricsHook>();
+    factory.SetMetricsHook(metrics);
 
     netkit::transport::ShmPipeConfig cfg;
     cfg.channel_endpoint = "local-control";
@@ -64,6 +80,10 @@ int main() {
     assert(received->sequence_id == 7);
     assert(received->message_type == "start");
     assert(factory.LastError().code == netkit::transport::TransportErrorCode::kNone);
+    assert(!metrics->events.empty());
+    assert(metrics->events.front().operation == "create.begin");
+    assert(metrics->events.back().operation == "create.complete");
+    assert(metrics->events.back().success);
 
     return 0;
 }

@@ -4,6 +4,7 @@ namespace netkit::transport {
 
 ShmPipeBundle ShmPipeFactory::Create(const ShmPipeConfig& config) {
     last_error_ = {};
+    EmitEvent("create.begin", true);
 
     auto control = std::make_unique<netkit::control::ControlChannelBackend>(
         netkit::control::DefaultBackendForCurrentPlatform());
@@ -15,7 +16,9 @@ ShmPipeBundle ShmPipeFactory::Create(const ShmPipeConfig& config) {
     bool data_opened = false;
     for (std::size_t attempt = 0; attempt < attempts; ++attempt) {
         control_opened = control->Open(config.channel_endpoint);
+        EmitEvent("control.open", control_opened);
         data_opened = data->Open(config.shared_memory_name.c_str());
+        EmitEvent("data.open", data_opened);
         if (control_opened && data_opened) {
             break;
         }
@@ -32,13 +35,29 @@ ShmPipeBundle ShmPipeFactory::Create(const ShmPipeConfig& config) {
         last_error_.code = TransportErrorCode::kControlOpenFailed;
         last_error_.message = "failed to open control channel backend";
         last_error_.retryable = attempts > 1;
+        EmitEvent("create.complete", false);
     } else if (!data_opened) {
         last_error_.code = TransportErrorCode::kDataOpenFailed;
         last_error_.message = "failed to open shared memory data plane";
         last_error_.retryable = attempts > 1;
+        EmitEvent("create.complete", false);
+    } else {
+        EmitEvent("create.complete", true);
     }
 
     return ShmPipeBundle{std::move(control), std::move(data)};
+}
+
+void ShmPipeFactory::EmitEvent(std::string operation, bool success) const {
+    if (!metrics_hook_) {
+        return;
+    }
+
+    TransportLifecycleEvent event;
+    event.component = "shm-pipe-factory";
+    event.operation = std::move(operation);
+    event.success = success;
+    metrics_hook_->OnLifecycleEvent(event);
 }
 
 } // namespace netkit::transport
