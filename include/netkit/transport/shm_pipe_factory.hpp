@@ -2,6 +2,7 @@
 
 #include "netkit/control/control_channel_backend.hpp"
 #include "netkit/shared_memory/shared_memory_transport.hpp"
+#include "netkit/transport/transport_error.hpp"
 
 #include <memory>
 #include <string>
@@ -21,7 +22,15 @@ struct ShmPipeBundle {
 
 class ShmPipeFactory {
 public:
-    ShmPipeBundle Create(const ShmPipeConfig& config) const;
+    ShmPipeBundle Create(const ShmPipeConfig& config);
+
+    void SetRetryPolicy(const RetryPolicy& retry_policy) { retry_policy_ = retry_policy; }
+    const RetryPolicy& CurrentRetryPolicy() const { return retry_policy_; }
+    const TransportError& LastError() const { return last_error_; }
+
+private:
+    RetryPolicy retry_policy_{};
+    TransportError last_error_{};
 };
 
 } // namespace netkit::transport

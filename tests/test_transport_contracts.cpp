@@ -6,6 +6,11 @@
 
 int main() {
     netkit::transport::ShmPipeFactory factory;
+    netkit::transport::RetryPolicy retry_policy;
+    retry_policy.max_attempts = 2;
+    factory.SetRetryPolicy(retry_policy);
+    assert(factory.CurrentRetryPolicy().max_attempts == 2);
+
     netkit::transport::ShmPipeConfig cfg;
     cfg.channel_endpoint = "local-control";
     cfg.shared_memory_name = "local-shm";
@@ -58,6 +63,7 @@ int main() {
     assert(received.has_value());
     assert(received->sequence_id == 7);
     assert(received->message_type == "start");
+    assert(factory.LastError().code == netkit::transport::TransportErrorCode::kNone);
 
     return 0;
 }
