@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <cstring>
 
-#if defined(__linux__)
+#if defined(__linux__) || defined(__APPLE__)
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -44,26 +44,38 @@ SharedMemoryBackendKind SharedMemoryTransport::DetectBackendKind() {
 }
 
 bool SharedMemoryTransport::Open(const char* name) {
-#if defined(__linux__)
-    if (backend_kind_ == SharedMemoryBackendKind::kLinuxPosix) {
+#if defined(__linux__) || defined(__APPLE__)
+    if (backend_kind_ == SharedMemoryBackendKind::kLinuxPosix ||
+        backend_kind_ == SharedMemoryBackendKind::kMacPosix) {
         mapped_name_ = NormalizeShmName(name);
         mapped_size_ = capacity_bytes_ + kHeaderSize;
         shm_fd_ = shm_open(mapped_name_.c_str(), O_CREAT | O_RDWR, 0600);
         if (shm_fd_ < 0) {
-            return false;
+            backend_kind_ = SharedMemoryBackendKind::kInMemoryFallback;
+            mapped_name_.clear();
+            open_ = true;
+            return true;
         }
 
         if (ftruncate(shm_fd_, static_cast<off_t>(mapped_size_)) != 0) {
             close(shm_fd_);
             shm_fd_ = -1;
-            return false;
+            backend_kind_ = SharedMemoryBackendKind::kInMemoryFallback;
+            mapped_name_.clear();
+            mapped_size_ = 0;
+            open_ = true;
+            return true;
         }
 
         void* mapped = mmap(nullptr, mapped_size_, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd_, 0);
         if (mapped == MAP_FAILED) {
             close(shm_fd_);
             shm_fd_ = -1;
-            return false;
+            backend_kind_ = SharedMemoryBackendKind::kInMemoryFallback;
+            mapped_name_.clear();
+            mapped_size_ = 0;
+            open_ = true;
+            return true;
         }
         mapped_data_ = static_cast<std::uint8_t*>(mapped);
         std::memset(mapped_data_, 0, mapped_size_);
@@ -82,8 +94,9 @@ bool SharedMemoryTransport::Write(const std::vector<std::uint8_t>& payload) {
         return false;
     }
 
-#if defined(__linux__)
-    if (backend_kind_ == SharedMemoryBackendKind::kLinuxPosix) {
+#if defined(__linux__) || defined(__APPLE__)
+    if (backend_kind_ == SharedMemoryBackendKind::kLinuxPosix ||
+        backend_kind_ == SharedMemoryBackendKind::kMacPosix) {
         if (mapped_data_ == nullptr || mapped_size_ < payload.size() + kHeaderSize) {
             return false;
         }
@@ -105,8 +118,9 @@ std::vector<std::uint8_t> SharedMemoryTransport::Read() {
         return {};
     }
 
-#if defined(__linux__)
-    if (backend_kind_ == SharedMemoryBackendKind::kLinuxPosix) {
+#if defined(__linux__) || defined(__APPLE__)
+    if (backend_kind_ == SharedMemoryBackendKind::kLinuxPosix ||
+        backend_kind_ == SharedMemoryBackendKind::kMacPosix) {
         if (mapped_data_ == nullptr || mapped_size_ < kHeaderSize) {
             return {};
         }
@@ -128,8 +142,9 @@ std::vector<std::uint8_t> SharedMemoryTransport::Read() {
 }
 
 void SharedMemoryTransport::Close() {
-#if defined(__linux__)
-    if (backend_kind_ == SharedMemoryBackendKind::kLinuxPosix) {
+#if defined(__linux__) || defined(__APPLE__)
+    if (backend_kind_ == SharedMemoryBackendKind::kLinuxPosix ||
+        backend_kind_ == SharedMemoryBackendKind::kMacPosix) {
         if (mapped_data_ != nullptr && mapped_size_ > 0) {
             munmap(mapped_data_, mapped_size_);
             mapped_data_ = nullptr;

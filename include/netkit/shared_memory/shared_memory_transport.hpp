@@ -36,7 +36,7 @@ private:
     std::string mapped_name_;
     std::vector<std::uint8_t> in_memory_buffer_;
 
-#if defined(__linux__)
+#if defined(__linux__) || defined(__APPLE__)
     int shm_fd_ = -1;
     std::uint8_t* mapped_data_ = nullptr;
     std::size_t mapped_size_ = 0;

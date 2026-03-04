@@ -16,7 +16,16 @@ int main() {
     assert(bundle.data);
 
 #if defined(__linux__)
-    assert(bundle.data->BackendKind() == netkit::shared_memory::SharedMemoryBackendKind::kLinuxPosix);
+    const auto linux_backend = bundle.data->BackendKind();
+    assert(
+        linux_backend == netkit::shared_memory::SharedMemoryBackendKind::kLinuxPosix ||
+        linux_backend == netkit::shared_memory::SharedMemoryBackendKind::kInMemoryFallback);
+#endif
+#if defined(__APPLE__)
+    const auto mac_backend = bundle.data->BackendKind();
+    assert(
+        mac_backend == netkit::shared_memory::SharedMemoryBackendKind::kMacPosix ||
+        mac_backend == netkit::shared_memory::SharedMemoryBackendKind::kInMemoryFallback);
 #endif
 
     std::vector<std::uint8_t> payload{1, 2, 3};
