@@ -5,8 +5,8 @@ on:
   pull_request:
 
 jobs:
-  linux-transport:
-    name: Linux Transport
+  smoke:
+    name: smoke
     runs-on: ubuntu-latest
 
     steps:
