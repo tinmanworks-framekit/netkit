@@ -15,6 +15,10 @@ int main() {
     assert(bundle.control);
     assert(bundle.data);
 
+#if defined(__linux__)
+    assert(bundle.data->BackendKind() == netkit::shared_memory::SharedMemoryBackendKind::kLinuxPosix);
+#endif
+
     std::vector<std::uint8_t> payload{1, 2, 3};
     assert(bundle.data->Write(payload));
 
